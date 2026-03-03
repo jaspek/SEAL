@@ -1,0 +1,8 @@
+{
+  "name": "dncnn_denoise",
+  "psnr_mean": 14.34406852722168,
+  "ssim_mean": NaN,
+  "percent": 40.0,
+  "clean_percent": 0.0,
+  "n_images_eval": 781.0
+}
