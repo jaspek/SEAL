@@ -55,6 +55,40 @@ except Exception:
     HAVE_PIQ = False
 
 
+def _ssim_fallback(pred: torch.Tensor, target: torch.Tensor, window_size: int = 11) -> torch.Tensor:
+    """
+    Pure-PyTorch SSIM (per-sample) when piq is not installed.
+    pred/target: B,C,H,W in [0,1]. Returns tensor of shape (B,).
+    """
+    C1 = 0.01 ** 2
+    C2 = 0.03 ** 2
+
+    # Average over channels first
+    pred_gray = pred.mean(dim=1, keepdim=True)    # B,1,H,W
+    target_gray = target.mean(dim=1, keepdim=True)
+
+    # Gaussian-like uniform window
+    pad = window_size // 2
+    kernel = torch.ones(1, 1, window_size, window_size, device=pred.device) / (window_size * window_size)
+
+    mu_p = F.conv2d(pred_gray, kernel, padding=pad)
+    mu_t = F.conv2d(target_gray, kernel, padding=pad)
+
+    mu_pp = mu_p * mu_p
+    mu_tt = mu_t * mu_t
+    mu_pt = mu_p * mu_t
+
+    sigma_pp = F.conv2d(pred_gray * pred_gray, kernel, padding=pad) - mu_pp
+    sigma_tt = F.conv2d(target_gray * target_gray, kernel, padding=pad) - mu_tt
+    sigma_pt = F.conv2d(pred_gray * target_gray, kernel, padding=pad) - mu_pt
+
+    ssim_map = ((2.0 * mu_pt + C1) * (2.0 * sigma_pt + C2)) / \
+               ((mu_pp + mu_tt + C1) * (sigma_pp + sigma_tt + C2))
+
+    # Mean per sample
+    return ssim_map.flatten(1).mean(dim=1)
+
+
 # -------------------------
 # InsightFace embeddings
 # -------------------------
@@ -151,7 +185,7 @@ def ssim_torch(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     # pred/target: B,C,H,W in [0,1]
     if HAVE_PIQ:
         return piq.ssim(pred, target, data_range=1.0, reduction="none")
-    return torch.full((pred.shape[0],), float("nan"), device=pred.device)
+    return _ssim_fallback(pred, target)
 
 
 def save_triplet_grid(enc_bchw: torch.Tensor, rec_bchw: torch.Tensor, clean_bchw: torch.Tensor,
@@ -437,7 +471,7 @@ class InsightFaceEmbedder:
     def __init__(self, cfg: AttackConfig):
         if not HAVE_INSIGHTFACE:
             raise RuntimeError("insightface is not installed/importable.")
-        self.app = FaceAnalysis(name=cfg.insightface_name, providers=None)
+        self.app = FaceAnalysis(name=cfg.insightface_name, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         self.app.prepare(ctx_id=0 if cfg.device.startswith("cuda") else -1, det_size=cfg.det_size)
 
     @torch.no_grad()
@@ -721,8 +755,8 @@ def run_full_evaluation(
         # save example grids once
         if cfg.save_examples and not saved_examples:
             examples_dir = Path(cfg.outdir) / "examples" / name
-            grid_path = str(examples_dir / "triplets.png")
-            heat_path = str(examples_dir / "triplets_with_heat.png")
+            grid_path = str(examples_dir / f"{name}_grid.png")
+            heat_path = str(examples_dir / f"{name}_heatmap.png")
             save_triplet_grid(
                 x_enc.detach().cpu(),
                 x_rec.detach().cpu(),
@@ -737,6 +771,16 @@ def run_full_evaluation(
                 out_path=heat_path,
                 max_rows=cfg.examples_per_attack
             )
+            # Also save individual columns for the combined figure later
+            cols_dir = Path(cfg.outdir) / "examples" / "_columns"
+            cols_dir.mkdir(parents=True, exist_ok=True)
+            b = min(x_enc.shape[0], cfg.examples_per_attack)
+            enc_col = np.concatenate([to_uint8_rgb(x_enc[i].cpu()) for i in range(b)], axis=0)
+            rec_col = np.concatenate([to_uint8_rgb(x_rec[i].cpu()) for i in range(b)], axis=0)
+            clean_col = np.concatenate([to_uint8_rgb(y_clean[i].cpu()) for i in range(b)], axis=0)
+            cv2.imwrite(str(cols_dir / "encrypted.png"), cv2.cvtColor(enc_col, cv2.COLOR_RGB2BGR))
+            cv2.imwrite(str(cols_dir / f"{name}.png"), cv2.cvtColor(rec_col, cv2.COLOR_RGB2BGR))
+            cv2.imwrite(str(cols_dir / "original.png"), cv2.cvtColor(clean_col, cv2.COLOR_RGB2BGR))
             saved_examples = True
 
         # visual metrics (rec vs clean)
@@ -1036,6 +1080,69 @@ def main():
         eval_embedding_attack(cfg, val_pairs, model, embedder=embedder, name="emb_attack")
 
     print("\nDone.")
+
+    # ── Build combined comparison figure ──
+    # Columns: [Encrypted | UNet | DnCNN | Pix2Pix | Original]
+    cols_dir = Path(cfg.outdir) / "examples" / "_columns"
+    if cols_dir.exists():
+        col_order = [
+            ("encrypted",        "Encrypted"),
+            ("unet_recon",       "U-Net"),
+            ("dncnn_denoise",    "DnCNN"),
+            ("pix2pix",          "Pix2Pix"),
+            ("original",         "Original"),
+        ]
+        available_cols = []
+        for filename, label in col_order:
+            p = cols_dir / f"{filename}.png"
+            if p.exists():
+                img = cv2.imread(str(p))
+                if img is not None:
+                    available_cols.append((img, label))
+
+        if len(available_cols) >= 2:
+            print(f"\n[Combined] Building comparison grid with {len(available_cols)} columns ...")
+
+            # All columns should have same height (same number of rows * 112)
+            col_imgs = [c[0] for c in available_cols]
+            col_labels = [c[1] for c in available_cols]
+
+            # Determine cell dimensions
+            cell_h = col_imgs[0].shape[0]  # total height of stacked faces
+            cell_w = col_imgs[0].shape[1]  # 112
+
+            label_band = 30
+            pad = 4
+            canvas_w = len(col_imgs) * (cell_w + pad) + pad
+            canvas_h = label_band + cell_h + pad
+
+            canvas = np.full((canvas_h, canvas_w, 3), 255, dtype=np.uint8)
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.55
+            font_thick = 2
+
+            for i, (col_img, label) in enumerate(zip(col_imgs, col_labels)):
+                x = pad + i * (cell_w + pad)
+                y = label_band
+
+                # Paste column
+                h_actual = min(col_img.shape[0], canvas_h - y)
+                w_actual = min(col_img.shape[1], cell_w)
+                canvas[y:y + h_actual, x:x + w_actual] = col_img[:h_actual, :w_actual]
+
+                # Column header label
+                (tw, th), _ = cv2.getTextSize(label, font, font_scale, font_thick)
+                lx = x + (cell_w - tw) // 2
+                ly = th + 6
+                cv2.putText(canvas, label, (lx, ly), font, font_scale, (30, 30, 30), font_thick, cv2.LINE_AA)
+
+            combined_path = Path(cfg.outdir) / "combined_nn_recon_comparison.png"
+            cv2.imwrite(str(combined_path), canvas)
+            print(f"  Saved: {combined_path}")
+            print(f"  Size:  {canvas.shape[1]}x{canvas.shape[0]} px")
+        else:
+            print("[Combined] Not enough columns to build comparison grid.")
 
 
 if __name__ == "__main__":
