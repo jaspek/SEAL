@@ -263,8 +263,9 @@ if __name__ == "__main__":
     dec_enc_dir = base / "data" / "dec_enc_png_0_100"
     report_csv = base / "results" / "decode_report_0_100.csv"
 
-    #percent_list = [0, 2, 4, 6, 8, 10, 12, 15]
-    percent_list = [ 0, 2, 4, 6, 8, 10, 12, 15, 20, 30, 40, 60, 80, 100]
+    ##percent_list = [0, 2, 4, 6, 8, 10, 12, 15]
+    # percent_list = [ 0, 2, 4, 6, 8, 10, 12, 15, 20, 30, 40, 60, 80, 100]
+    percent_list = [40]
 
     batch_process(
         input_png_dir=input_png_dir,
