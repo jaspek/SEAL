@@ -1,4 +1,4 @@
-# SEAL - Selective Encryption Attack Lab for Face Images
+# SEAL - Selective Encryption Attack Lab
 
 Learning-based reconstruction attacks against selectively encrypted JPEG2000 biometric face samples.
 
