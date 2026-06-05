@@ -1,0 +1,24 @@
+# ---------------------------------------------------------------------------
+# Seminar: face-embedding-fusion — Python dependencies
+# Install (inside a virtual environment):  pip install -r requirements.txt
+# Tested with Python 3.10
+# ---------------------------------------------------------------------------
+
+numpy==2.2.6
+opencv-python==4.6.0.66
+scikit-learn==1.7.2
+tqdm>=4.65
+termcolor>=2.0          # required by the external MagFace repo
+
+# Face recognition toolkit (ArcFace models + face alignment). Pulls in onnx.
+insightface==0.7.3
+
+# ONNX runtime — CPU build (works on any machine, no GPU required).
+# >>> For an NVIDIA GPU, delete the line below and run instead:
+#     pip uninstall onnxruntime && pip install onnxruntime-gpu==1.23.2
+onnxruntime==1.23.2
+
+# PyTorch — see README for the GPU (CUDA) install command.
+# The plain pins below give CPU builds, which run anywhere.
+torch==2.6.0
+torchvision==0.21.0
