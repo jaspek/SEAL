@@ -1,0 +1,26 @@
+# --- Large generated artifacts (do NOT commit; >100MB GitHub limit) ---
+embeddings/
+quantized_models/
+error_crops/
+
+# Model weights / cached embeddings
+*.pt
+*.pth
+*.onnx
+*.npz
+*.ckpt
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
