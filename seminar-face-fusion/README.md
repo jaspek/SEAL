@@ -45,6 +45,8 @@ excluded (see `.gitignore`) and must be obtained separately on each machine:
 | **AdaFace** repo + weights | External research repo | `git clone https://github.com/mk-minchul/AdaFace` + download checkpoint |
 | **LFW dataset** | Large; InsightFace caches it | InsightFace eval pack, or your existing `~/.insightface` cache |
 
+**See [`DATA.md`](DATA.md) for exact download links, filenames, and target paths for every dataset and model file.**
+
 ### 4. Make MagFace / AdaFace importable
 
 The code does `import net` and `from inference.network_inf import builder_inf`,
