@@ -1,0 +1,13 @@
+# Core CPU toolkit (the 1:N + compression rate-distortion study).
+# Validated on Python 3.11, numpy 2.x, scikit-learn 1.x, faiss-cpu 1.x.
+numpy
+scikit-learn
+faiss-cpu          # PQ/OPQ + fast large-gallery search; harness falls back to numpy if absent
+matplotlib         # optional, only for --plot
+
+# Only needed for the network-compression scripts in ./network :
+# onnx
+# onnxruntime              # static INT8 PTQ (CPU)  -> quantize_onnx_static.py
+# opencv-python-headless   # reading calibration crops
+# torch                    # one-shot pruning (CPU) -> prune_oneshot.py
+# torch-pruning            # DepGraph structured pruning
