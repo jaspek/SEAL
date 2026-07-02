@@ -1,0 +1,33 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# ---- Machine-specific config (copy paths.example.yaml -> paths.yaml) ----
+configs/paths.yaml
+
+# ---- Datasets: never commit (see docs/DATASETS.md for download sources) ----
+data/
+
+# ---- Large binaries: never commit (regenerate locally) ----
+*.npz
+*.onnx
+*.pth
+*.pt
+*.ckpt
+*.bin
+
+# ---- Generated artifacts ----
+outputs/embeddings/
+outputs/models/
+outputs/error_crops/
+# NOTE: outputs/results (CSVs) and outputs/figures (plots) ARE committed.
+
+# ---- IDE / OS ----
+.idea/
+.DS_Store
+Thumbs.db

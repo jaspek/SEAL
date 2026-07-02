@@ -1,0 +1,8 @@
+{
+  "name": "unet_recon",
+  "psnr_mean": 15.77332592010498,
+  "ssim_mean": NaN,
+  "percent": 40.0,
+  "clean_percent": 0.0,
+  "n_images_eval": 781.0
+}

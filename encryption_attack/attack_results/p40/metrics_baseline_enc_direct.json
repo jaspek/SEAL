@@ -1,0 +1,8 @@
+{
+  "name": "baseline_enc_direct",
+  "psnr_mean": 9.643448829650879,
+  "ssim_mean": NaN,
+  "percent": 40.0,
+  "clean_percent": 0.0,
+  "n_images_eval": 781.0
+}

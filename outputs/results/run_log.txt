@@ -1,0 +1,84 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260702085834
+Username: VRANDUK\jasko
+RunAs User: VRANDUK\jasko
+Configuration Name: 
+Machine: VRANDUK (Microsoft Windows NT 10.0.19045.0)
+Host Application: powershell.exe
+Process ID: 19696
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is outputs\results\run_log.txt
+
+=== python experiments/build_embeddings.py --dataset cplfw ===
+  File "C:\Python310\lib\site-packages\insightface\thirdparty\face3d\mesh\vis.py", line 6, in <module>
+    import matplotlib.pyplot as plt
+  File "C:\Python310\lib\site-packages\matplotlib\__init__.py", line 264, in <module>
+    _check_versions()
+  File "C:\Python310\lib\site-packages\matplotlib\__init__.py", line 249, in _check_versions
+    from . import ft2font  # noqa: F401
+ImportError: initialization failed
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+PS C:\Users\jasko\Programming\Python\SEAL>
+PS C:\Users\jasko\Programming\Python\SEAL>
+PS C:\Users\jasko\Programming\Python\SEAL>
+PS C:\Users\jasko\Programming\Python\SEAL>
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) clear
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) powershell -ExecutionPolicy Bypass -File .\commands.ps1
+nal_alloc': '0', 'gpu_mem_limit': '18446744073709551615', 'enable_cuda_graph': '0', 'gpu_external_free': '0', 'gpu_external_empty_cache': '0', 'arena_extend_strategy': 'kNextPowerOfTwo', 'cudnn_conv_algo_search': 'EXHAUSTIVE', 'do_c
+opy_in_default_stream': '1', 'cudnn_conv_use_max_workspace': '1', 'tunable_op_enable': '0', 'tunable_op_tuning_enable': '0', 'tunable_op_max_tuning_duration_ms': '0', 'enable_skip_layer_norm_strict_mode': '0', 'prefer_nhwc': '0', 'u
+se_ep_level_unified_stream': '0', 'use_tf32': '1', 'sdpa_kernel': '0', 'fuse_conv_bias': '0'}, 'CPUExecutionProvider': {}}
+find model: C:\Users\jasko/.insightface\models\buffalo_l\genderage.onnx genderage ['None', 3, 96, 96] 0.0 1.0
+Applied providers: ['CUDAExecutionProvider', 'CPUExecutionProvider'], with options: {'CUDAExecutionProvider': {'device_id': '0', 'has_user_compute_stream': '0', 'cudnn_conv1d_pad_to_nc1d': '0', 'user_compute_stream': '0', 'gpu_exter
+nal_alloc': '0', 'gpu_mem_limit': '18446744073709551615', 'enable_cuda_graph': '0', 'gpu_external_free': '0', 'gpu_external_empty_cache': '0', 'arena_extend_strategy': 'kNextPowerOfTwo', 'cudnn_conv_algo_search': 'EXHAUSTIVE', 'do_c
+opy_in_default_stream': '1', 'cudnn_conv_use_max_workspace': '1', 'tunable_op_enable': '0', 'tunable_op_tuning_enable': '0', 'tunable_op_max_tuning_duration_ms': '0', 'enable_skip_layer_norm_strict_mode': '0', 'prefer_nhwc': '0', 'u
+se_ep_level_unified_stream': '0', 'use_tf32': '1', 'sdpa_kernel': '0', 'fuse_conv_bias': '0'}, 'CPUExecutionProvider': {}}
+find model: C:\Users\jasko/.insightface\models\buffalo_l\w600k_r50.onnx recognition ['None', 3, 112, 112] 127.5 127.5
+set det-size: (640, 640)
+  arcface:  43%|██████████████████████████████████████████████████████████████████████████████▍                                                                                                       | 81/188 [00:09<00:13,  8.11it/s]
+Traceback (most recent call last):
+  File "C:\Users\jasko\Programming\Python\SEAL\experiments\build_embeddings.py", line 62, in <module>
+    main()
+  File "C:\Users\jasko\Programming\Python\SEAL\experiments\build_embeddings.py", line 53, in main
+    emb = models.embed_all(images, arcface=args.arcface, batch=args.batch)
+  File "C:\Users\jasko\Programming\Python\SEAL\src\facecomp\extract\models.py", line 147, in embed_all
+    rec = load_arcface(); res["arcface"] = embed_arcface(rec, images, batch); del rec
+  File "C:\Users\jasko\Programming\Python\SEAL\src\facecomp\extract\models.py", line 102, in embed_arcface
+    feats = _l2_rows(rec.get_feat([images[i] for i in idxs]).astype(np.float32))
+  File "C:\Python310\lib\site-packages\insightface\model_zoo\arcface_onnx.py", line 84, in get_feat
+    net_out = self.session.run(self.output_names, {self.input_name: blob})[0]
+  File "C:\Users\jasko\Programming\Python\SEAL\seminar-face-fusion\.venv\lib\site-packages\onnxruntime\capi\onnxruntime_inference_collection.py", line 287, in run
+    return self._sess.run(output_names, input_feed, run_options)
+KeyboardInterrupt
+(.venv) TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) powershell -ExecutionPolicy Bypass -File .\commands.ps1
+  File "C:\Python310\lib\site-packages\torch\serialization.py", line 693, in default_restore_location
+    result = fn(storage, location)
+  File "C:\Python310\lib\site-packages\torch\serialization.py", line 632, in _deserialize
+    return obj.to(device=device)
+  File "C:\Python310\lib\site-packages\torch\storage.py", line 292, in to
+    return _to(self, device, non_blocking)
+  File "C:\Python310\lib\site-packages\torch\_utils.py", line 100, in _to
+    untyped_storage.copy_(self, non_blocking)
+KeyboardInterrupt
+(.venv) TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) powershell -ExecutionPolicy Bypass -File .\commands.ps1
+
+PS C:\Users\jasko\Programming\Python\SEAL>

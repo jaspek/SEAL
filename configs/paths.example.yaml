@@ -1,0 +1,22 @@
+# All relative paths resolve against the repo root.
+embeddings_dir: outputs/embeddings
+
+data:
+  root: data
+  lfw_aligned: data/lfw_aligned_png
+  pairs_csv:   data/pairs.csv
+  bin_pack:    data/insightface_bins   # lfw.bin cplfw.bin calfw.bin cfp_fp.bin agedb_30.bin
+  xqlfw:       data/xqlfw
+  sllfw_pairs: data/sllfw/pairs.txt
+  tinyface:    data/tinyface
+
+models:                 # only needed for extraction (Batch 2), not the CPU study
+  arcface_onnx: ""      # e.g. ~/.insightface/models/buffalo_l/w600k_r50.onnx
+  magface_pth:  ""
+  adaface_ckpt: ""
+  magface_repo: ""
+  adaface_repo: ""
+
+outputs:
+  results: outputs/results
+  figures: outputs/figures
