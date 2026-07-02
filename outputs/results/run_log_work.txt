@@ -90,3 +90,77 @@ wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/r
 wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/figures/rd_tinyface_full.png
 
 ALL DONE — tables in outputs/results/, log in outputs/results/run_log_work.txt
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --num-distractors 0 --out rd_lfw_N0.csv ===
+N=7701, fused_dim=1536, labels=y, pairs=5958
+reducer  dim precision  bits    rank1    rank5      mAP      acc  acc_std
+    pca  128    binary   128 0.926316 0.945614 0.935848 0.974656 0.005169
+    itq  128    binary   128 0.939766 0.951462 0.945472 0.978684 0.003679
+    pca  256    binary   256 0.941813 0.950877 0.946472 0.978181 0.004308
+    itq  256    binary   256 0.949123 0.954094 0.951534 0.980530 0.002627
+   none 1536    binary  1536 0.949708 0.953509 0.951920 0.980865 0.003292
+   none 1536      int8 12288 0.950585 0.954678 0.952617 0.980698 0.003378
+   none 1536      fp16 24576 0.950585 0.954678 0.952618 0.980698 0.003378
+   none 1536      fp32 49152 0.950585 0.954678 0.952618 0.980698 0.003378
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_lfw_N0.csv
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --num-distractors 10000 --out rd_lfw_N10000.csv ===
+N=7701, fused_dim=1536, labels=y, pairs=5958
+reducer  dim precision  bits    rank1    rank5      mAP      acc  acc_std
+    pca  128    binary   128 0.908187 0.934211 0.920691 0.974656 0.005169
+    itq  128    binary   128 0.932749 0.948246 0.940041 0.978684 0.003679
+    pca  256    binary   256 0.938596 0.947953 0.943236 0.978181 0.004308
+    itq  256    binary   256 0.948538 0.953216 0.950698 0.980530 0.002627
+   none 1536    binary  1536 0.949708 0.953509 0.951847 0.980865 0.003292
+   none 1536      int8 12288 0.950585 0.954678 0.952580 0.980698 0.003378
+   none 1536      fp16 24576 0.950585 0.954678 0.952581 0.980698 0.003378
+   none 1536      fp32 49152 0.950585 0.954678 0.952581 0.980698 0.003378
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_lfw_N10000.csv
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --num-distractors 100000 --out rd_lfw_N100000.csv ===
+N=7701, fused_dim=1536, labels=y, pairs=5958
+reducer  dim precision  bits    rank1    rank5      mAP      acc  acc_std
+    pca  128    binary   128 0.878070 0.914620 0.894501 0.974656 0.005169
+    itq  128    binary   128 0.916959 0.939181 0.927091 0.978684 0.003679
+    pca  256    binary   256 0.933626 0.944444 0.938875 0.978181 0.004308
+    itq  256    binary   256 0.947953 0.951170 0.949709 0.980530 0.002627
+   none 1536    binary  1536 0.949708 0.953509 0.951783 0.980865 0.003292
+   none 1536      int8 12288 0.950585 0.954678 0.952555 0.980698 0.003378
+   none 1536      fp16 24576 0.950585 0.954678 0.952556 0.980698 0.003378
+   none 1536      fp32 49152 0.950585 0.954678 0.952556 0.980698 0.003378
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_lfw_N100000.csv
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --num-distractors 500000 --out rd_lfw_N500000.csv ===
+N=7701, fused_dim=1536, labels=y, pairs=5958
+reducer  dim precision  bits    rank1    rank5      mAP      acc  acc_std
+    pca  128    binary   128 0.846784 0.892690 0.868068 0.974656 0.005169
+    itq  128    binary   128 0.903509 0.926316 0.915027 0.978684 0.003679
+    pca  256    binary   256 0.927485 0.940351 0.933413 0.978181 0.004308
+    itq  256    binary   256 0.946491 0.951170 0.948622 0.980530 0.002627
+   none 1536    binary  1536 0.949708 0.953509 0.951721 0.980865 0.003292
+   none 1536      int8 12288 0.950585 0.954678 0.952538 0.980698 0.003378
+   none 1536      fp16 24576 0.950585 0.954678 0.952539 0.980698 0.003378
+   none 1536      fp32 49152 0.950585 0.954678 0.952539 0.980698 0.003378
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_lfw_N500000.csv
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --num-distractors 1000000 --out rd_lfw_N1000000.csv ===
+N=7701, fused_dim=1536, labels=y, pairs=5958
+reducer  dim precision  bits    rank1    rank5      mAP      acc  acc_std
+    pca  128    binary   128 0.831287 0.881579 0.854509 0.974656 0.005169
+    itq  128    binary   128 0.896491 0.921637 0.908612 0.978684 0.003679
+    pca  256    binary   256 0.923684 0.936842 0.930137 0.978181 0.004308
+    itq  256    binary   256 0.945322 0.950292 0.947778 0.980530 0.002627
+   none 1536    binary  1536 0.949708 0.953509 0.951655 0.980865 0.003292
+   none 1536      int8 12288 0.950585 0.954678 0.952529 0.980698 0.003378
+   none 1536      fp16 24576 0.950585 0.954678 0.952530 0.980698 0.003378
+   none 1536      fp32 49152 0.950585 0.954678 0.952530 0.980698 0.003378
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_lfw_N1000000.csv
+SKIP TinyFace-full: rd_tinyface_full.csv already exists (FORCE_TINYFACE=1 to redo)
+
+ALL DONE — tables in outputs/results/, log in outputs/results/run_log_work.txt
+Sanity check: rd_lfw_N0.csv rank1 should be ~0.97-0.99, NOT exactly 1.0.
