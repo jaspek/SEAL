@@ -129,3 +129,24 @@ PS C:\Users\jasko\Programming\Python\SEAL>
 (.venv) git pull
 
 PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) powershell -ExecutionPolicy Bypass -File .\commands.ps1
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git add -A 
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git status
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git commit
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git commit -m "update of fail and addition of analisys of overlap"
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git push
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git pull
+
+PS C:\Users\jasko\Programming\Python\SEAL>
