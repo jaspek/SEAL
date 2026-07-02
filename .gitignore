@@ -10,8 +10,10 @@ venv/
 # ---- Machine-specific config (copy paths.example.yaml -> paths.yaml) ----
 configs/paths.yaml
 
-# ---- Datasets: never commit (see docs/DATASETS.md for download sources) ----
-data/
+# ---- Datasets: never commit (see docs/DATA.md for download sources) ----
+# Leading slash = repo-root data/ ONLY (a bare "data/" would also ignore
+# src/facecomp/data/ — that exact mistake once broke the package install).
+/data/
 
 # ---- Large binaries: never commit (regenerate locally) ----
 *.npz

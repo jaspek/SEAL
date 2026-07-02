@@ -82,3 +82,20 @@ PS C:\Users\jasko\Programming\Python\SEAL>
 (.venv) powershell -ExecutionPolicy Bypass -File .\commands.ps1
 
 PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git tag pre-restructure
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git add -A
+The file will have its original line endings in your working directory
+warning: LF will be replaced by CRLF in src/facecomp/viz/plots.py.
+The file will have its original line endings in your working directory
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git status
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git commit -m "Restructure into facecomp package; add rate-distortion results (6 datasets + ms1mv2 control)"
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git push origin main --tags
+
+PS C:\Users\jasko\Programming\Python\SEAL>

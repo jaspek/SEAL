@@ -20,8 +20,8 @@ docs/                pipeline docs, dataset download sources (DATA.md)
 data/                datasets live here locally — gitignored, see docs
 legacy/              original seminar scripts (pre-restructure, reference only)
 encryption_attack/   separate strand: JPEG2000 selective-encryption attack lab
-commands.ps1         full experiment run for the GPU machine
-commands_work.ps1    CPU-only runs (gallery sweep) for the 32 GB machine
+commands.ps1         full experiment run for the GPU machine (Windows)
+commands_work.sh     CPU-only runs (gallery sweep) for the 32 GB Linux machine
 ```
 
 ## Quick start
