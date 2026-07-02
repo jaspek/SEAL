@@ -1,0 +1,11 @@
+dataset,task,method,bits,acc,acc_std
+xqlfw,1:1,pca128+sign,128,0.815667,0.07983
+xqlfw,1:1,itq128+sign,128,0.822167,0.088343
+xqlfw,1:1,rabitq128,160,0.720667,0.062819
+xqlfw,1:1,pca+rabitq128,160,0.775667,0.086085
+xqlfw,1:1,pca256+sign,256,0.809333,0.066338
+xqlfw,1:1,itq256+sign,256,0.819,0.068436
+xqlfw,1:1,rabitq256,288,0.778,0.05829
+xqlfw,1:1,pca+rabitq256,288,0.795,0.085991
+xqlfw,1:1,binary-1536,1536,0.871,0.066859
+xqlfw,1:1,fp32-1536,49152,0.8765,0.042956

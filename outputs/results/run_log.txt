@@ -150,3 +150,29 @@ PS C:\Users\jasko\Programming\Python\SEAL>
 (.venv) git pull
 
 PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git add -A 
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git status
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git commit -m "Gallery sweep added"
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) python .\experiments\run_rabitq.py --emb .\outputs\embeddings\emb_xqlfw.npz .\outputs\embeddings\emb_tinyface_full.npz
+             pca128+sign (  128 bits): rank1 0.2151  rank5 0.2916
+             itq128+sign (  128 bits): rank1 0.2006  rank5 0.2846
+          rabitq128-asym (  160 bits): rank1 0.1835  rank5 0.2414
+      pca+rabitq128-asym (  160 bits): rank1 0.2648  rank5 0.3450
+             pca256+sign (  256 bits): rank1 0.2838  rank5 0.3600
+             itq256+sign (  256 bits): rank1 0.2878  rank5 0.3589
+          rabitq256-asym (  288 bits): rank1 0.2580  rank5 0.3254
+      pca+rabitq256-asym (  288 bits): rank1 0.3246  rank5 0.4058
+             binary-1536 ( 1536 bits): rank1 0.3589  rank5 0.4249
+               fp32-1536 (49152 bits): rank1 0.3857  rank5 0.4576
+  wrote C:\Users\jasko\Programming\Python\SEAL\outputs\results\rabitq_tinyface_full.csv
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) powershell -ExecutionPolicy Bypass -File .\commands.ps1
+
+PS C:\Users\jasko\Programming\Python\SEAL>

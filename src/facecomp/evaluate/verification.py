@@ -23,14 +23,17 @@ def evaluate_lfw(emb, pair_idx, thr_grid=None):
     return float(np.mean(accs)), float(np.std(accs))
 
 
-def roc_metrics(emb, pair_idx, fars=(1e-1, 1e-2, 1e-3)):
+def roc_metrics(emb, pair_idx, fars=(1e-2, 1e-3)):
+    """Pooled-pair operating-point metrics. With ~3000 imposters per benchmark,
+    FAR=1e-2 is the reliable point; FAR=1e-3 rests on ~3 imposters — report it
+    with that caveat. Keys are CSV-safe: eer, tar_far0.01, tar_far0.001."""
     from sklearn.metrics import roc_curve
     scores, labels = cosine_scores(emb, pair_idx), pair_idx[:, 2]
     fpr, tpr, _ = roc_curve(labels, scores)
     fnr = 1 - tpr
     i = int(np.nanargmin(np.abs(fnr - fpr)))
-    out = {"eer": float((fpr[i] + fnr[i]) / 2)}
+    out = {"eer": round(float((fpr[i] + fnr[i]) / 2), 6)}
     for far in fars:
         j = max(np.searchsorted(fpr, far, side="right") - 1, 0)
-        out[f"tar@far={far:g}"] = float(tpr[j])
+        out[f"tar_far{far:g}"] = round(float(tpr[j]), 6)
     return out

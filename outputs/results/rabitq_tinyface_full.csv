@@ -1,0 +1,11 @@
+dataset,task,method,bits,rank1,rank5,mAP
+tinyface_full,1:N,pca128+sign,128,0.215129,0.291577,0.168275
+tinyface_full,1:N,itq128+sign,128,0.200644,0.284603,0.15778
+tinyface_full,1:N,rabitq128-asym,160,0.183476,0.241416,0.13847
+tinyface_full,1:N,pca+rabitq128-asym,160,0.264753,0.344957,0.206334
+tinyface_full,1:N,pca256+sign,256,0.283798,0.359979,0.222496
+tinyface_full,1:N,itq256+sign,256,0.287822,0.358906,0.219965
+tinyface_full,1:N,rabitq256-asym,288,0.258047,0.325376,0.201049
+tinyface_full,1:N,pca+rabitq256-asym,288,0.324571,0.405848,0.257284
+tinyface_full,1:N,binary-1536,1536,0.358906,0.424893,0.28464
+tinyface_full,1:N,fp32-1536,49152,0.38573,0.457618,0.311305

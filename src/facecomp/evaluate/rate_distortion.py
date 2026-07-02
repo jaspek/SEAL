@@ -48,5 +48,6 @@ def rate_distortion(fused, labels=None, pair_idx=None, gallery_idx=None, probe_i
         if pair_idx is not None:
             acc, std = ver.evaluate_lfw(comp, pair_idx)
             row.update(acc=acc, acc_std=std)
+            row.update(ver.roc_metrics(comp, pair_idx))   # eer, tar@far columns
         rows.append(row)
     return pd.DataFrame(rows)
