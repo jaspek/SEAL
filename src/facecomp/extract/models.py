@@ -112,12 +112,15 @@ def embed_arcface(rec, images, batch=BATCH):
 
 
 def embed_arcface_onnx(sess, images, batch=BATCH):
+    """MXNet-era model-zoo convention: RGB, RAW 0-255 pixels, NO normalization.
+    Feeding (x-127.5)/127.5 collapses this model to a constant embedding
+    (genuine/imposter gap 0.001 vs 0.731 with raw inputs — measured)."""
     inp = sess.get_inputs()[0].name
     out = np.zeros((len(images), 512), np.float32)
     valid = _valid_idxs(images)
     for s in tqdm(range(0, len(valid), batch), desc="  arcface(ms1mv2)"):
         idxs = valid[s:s + batch]
-        x = np.stack([((cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB).astype(np.float32) - 127.5) / 127.5)
+        x = np.stack([cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB).astype(np.float32)
                       .transpose(2, 0, 1) for i in idxs])
         y = _l2_rows(sess.run(None, {inp: x})[0].astype(np.float32))
         for j, i in enumerate(idxs):

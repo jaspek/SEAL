@@ -99,3 +99,33 @@ PS C:\Users\jasko\Programming\Python\SEAL>
 (.venv) git push origin main --tags
 
 PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git add .
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git restore .
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git add -A
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git status
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git commit - "Fix unintentional git ignore"
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git commit -m "Fix unintentional git ignore"
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git push
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git pull
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git push
+
+PS C:\Users\jasko\Programming\Python\SEAL>
+(.venv) git pull
+
+PS C:\Users\jasko\Programming\Python\SEAL>

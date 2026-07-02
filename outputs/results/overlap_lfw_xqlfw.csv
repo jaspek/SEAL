@@ -1,0 +1,3 @@
+dataset,n_images,fused_effective_rank,fused_participation_ratio,fused_k95,fused_k99,fused_dim,erank_arcface,erank_magface,erank_adaface,n_pairs,err_arcface,err_magface,err_adaface,err_shared,shared_frac,shared_false_rejects,shared_false_accepts,acc_arcface,acc_magface,acc_adaface,acc_best_single,acc_concat,acc_scoremean,fusion_gain,acc_majority_vote,acc_oracle
+lfw,7701,436.7,301.5,536,849,1536,327.4,196.6,333.4,5958,112,114,111,111,0.9881,111,0,0.980865,0.980698,0.981034,0.981034,0.980698,0.980698,-0.000336,0.981202,0.98137
+xqlfw,12000,437.9,240.1,611,880,1536,311.8,174.0,296.1,6000,484,1155,821,294,0.3585,254,40,0.904167,0.7565,0.849667,0.904167,0.875333,0.875333,-0.028833,0.881333,0.951

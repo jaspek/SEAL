@@ -19,7 +19,13 @@ def _l2(x, eps=1e-10):
 
 
 def labels_from_paths(paths):
-    names = [os.path.basename(os.path.dirname(str(p))) for p in paths]
+    """Identity = parent-folder name. Paths may have been saved on Windows and
+    loaded on Linux (or vice versa), so normalize separators before splitting —
+    otherwise all images silently collapse into one identity."""
+    def parent(p):
+        parts = str(p).replace("\\", "/").rstrip("/").split("/")
+        return parts[-2] if len(parts) >= 2 else ""
+    names = [parent(p) for p in paths]
     uniq = {n: i for i, n in enumerate(dict.fromkeys(names))}
     return np.array([uniq[n] for n in names], dtype=np.int64)
 
