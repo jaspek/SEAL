@@ -1,0 +1,92 @@
+SKIP sweep: outputs/embeddings/lfw_embeddings.npz not found
+SKIP TinyFace-full: outputs/embeddings/emb_tinyface_full.npz not found (build it on the home GPU first)
+
+ALL DONE — tables in outputs/results/, log in outputs/results/run_log_work.txt
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --num-distractors 0 --out rd_lfw_N0.csv ===
+N=7701, fused_dim=1536, labels=y, pairs=5958
+reducer  dim precision  bits  rank1  rank5  mAP      acc  acc_std
+    pca  128    binary   128    1.0    1.0  1.0 0.974656 0.005169
+    itq  128    binary   128    1.0    1.0  1.0 0.978684 0.003679
+    pca  256    binary   256    1.0    1.0  1.0 0.978181 0.004308
+    itq  256    binary   256    1.0    1.0  1.0 0.980530 0.002627
+   none 1536    binary  1536    1.0    1.0  1.0 0.980865 0.003292
+   none 1536      int8 12288    1.0    1.0  1.0 0.980698 0.003378
+   none 1536      fp16 24576    1.0    1.0  1.0 0.980698 0.003378
+   none 1536      fp32 49152    1.0    1.0  1.0 0.980698 0.003378
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_lfw_N0.csv
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --num-distractors 10000 --out rd_lfw_N10000.csv ===
+N=7701, fused_dim=1536, labels=y, pairs=5958
+reducer  dim precision  bits    rank1    rank5      mAP      acc  acc_std
+    pca  128    binary   128 0.000000 0.000779 0.000979 0.974656 0.005169
+    itq  128    binary   128 0.000000 0.000519 0.000885 0.978684 0.003679
+    pca  256    binary   256 0.000000 0.000260 0.000918 0.978181 0.004308
+    itq  256    binary   256 0.000519 0.000779 0.001355 0.980530 0.002627
+   none 1536    binary  1536 0.009740 0.020779 0.016595 0.980865 0.003292
+   none 1536      int8 12288 0.048961 0.077922 0.064455 0.980698 0.003378
+   none 1536      fp16 24576 0.049351 0.077792 0.064672 0.980698 0.003378
+   none 1536      fp32 49152 0.049351 0.077792 0.064672 0.980698 0.003378
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_lfw_N10000.csv
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --num-distractors 100000 --out rd_lfw_N100000.csv ===
+N=7701, fused_dim=1536, labels=y, pairs=5958
+reducer  dim precision  bits    rank1    rank5      mAP      acc  acc_std
+    pca  128    binary   128 0.000000 0.000000 0.000109 0.974656 0.005169
+    itq  128    binary   128 0.000000 0.000000 0.000094 0.978684 0.003679
+    pca  256    binary   256 0.000000 0.000000 0.000097 0.978181 0.004308
+    itq  256    binary   256 0.000000 0.000260 0.000213 0.980530 0.002627
+   none 1536    binary  1536 0.003766 0.007403 0.006155 0.980865 0.003292
+   none 1536      int8 12288 0.028701 0.044416 0.037386 0.980698 0.003378
+   none 1536      fp16 24576 0.028831 0.044935 0.037511 0.980698 0.003378
+   none 1536      fp32 49152 0.028831 0.044935 0.037511 0.980698 0.003378
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_lfw_N100000.csv
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --num-distractors 500000 --out rd_lfw_N500000.csv ===
+N=7701, fused_dim=1536, labels=y, pairs=5958
+reducer  dim precision  bits    rank1    rank5      mAP      acc  acc_std
+    pca  128    binary   128 0.000000 0.000000 0.000023 0.974656 0.005169
+    itq  128    binary   128 0.000000 0.000000 0.000019 0.978684 0.003679
+    pca  256    binary   256 0.000000 0.000000 0.000019 0.978181 0.004308
+    itq  256    binary   256 0.000000 0.000000 0.000051 0.980530 0.002627
+   none 1536    binary  1536 0.001818 0.003766 0.003082 0.980865 0.003292
+   none 1536      int8 12288 0.022078 0.029870 0.026910 0.980698 0.003378
+   none 1536      fp16 24576 0.021948 0.030000 0.026913 0.980698 0.003378
+   none 1536      fp32 49152 0.021948 0.030000 0.026911 0.980698 0.003378
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_lfw_N500000.csv
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --num-distractors 1000000 --out rd_lfw_N1000000.csv ===
+N=7701, fused_dim=1536, labels=y, pairs=5958
+reducer  dim precision  bits    rank1    rank5      mAP      acc  acc_std
+    pca  128    binary   128 0.000000 0.000000 0.000011 0.974656 0.005169
+    itq  128    binary   128 0.000000 0.000000 0.000009 0.978684 0.003679
+    pca  256    binary   256 0.000000 0.000000 0.000010 0.978181 0.004308
+    itq  256    binary   256 0.000000 0.000000 0.000023 0.980530 0.002627
+   none 1536    binary  1536 0.001299 0.002857 0.002255 0.980865 0.003292
+   none 1536      int8 12288 0.018831 0.026753 0.023286 0.980698 0.003378
+   none 1536      fp16 24576 0.018831 0.026883 0.023355 0.980698 0.003378
+   none 1536      fp32 49152 0.018831 0.026883 0.023361 0.980698 0.003378
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_lfw_N1000000.csv
+
+=== python3 experiments/run_rate_distortion.py --emb outputs/embeddings/emb_tinyface_full.npz --out rd_tinyface_full.csv --plot ===
+N=161599, fused_dim=1536, labels=y, pairs=0
+  predefined split: 157871 gallery, 3728 probe
+reducer  dim precision  bits    rank1    rank5      mAP
+    pca  128    binary   128 0.214324 0.292114 0.167715
+    itq  128    binary   128 0.199571 0.281921 0.156503
+    pca  256    binary   256 0.281921 0.360783 0.221605
+    itq  256    binary   256 0.284335 0.359442 0.219110
+   none 1536    binary  1536 0.359979 0.425161 0.284906
+   none 1536      int8 12288 0.385461 0.457350 0.311320
+   none 1536      fp16 24576 0.385730 0.457618 0.311303
+   none 1536      fp32 49152 0.385730 0.457618 0.311305
+
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/results/rd_tinyface_full.csv
+wrote /home/stud/jbegic/Programming/Python/Program00_Work/SEAL/outputs/figures/rd_tinyface_full.png
+
+ALL DONE — tables in outputs/results/, log in outputs/results/run_log_work.txt
