@@ -1,0 +1,138 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260703092324
+Username: VRANDUK\jasko
+RunAs User: VRANDUK\jasko
+Configuration Name: 
+Machine: VRANDUK (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File .\commands_quantize.ps1
+Process ID: 1196
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is outputs\results\run_log_quant.txt
+
+=== python experiments/quantize_arcface.py ===
+    sess = C.InferenceSession(session_options, self._model_path, True, self._read_config_from_model)
+onnxruntime.capi.onnxruntime_pybind11_state.InvalidGraph: [ONNXRuntimeError] : 10 : INVALID_GRAPH : Load model from C:\Users\jasko\Programming\Python\SEAL\data\models\w600k_r50_int8.onnx failed:This is an invalid model. In Node, ("6
+85_DequantizeLinear", DequantizeLinear, "", -1) : ("685_quantized": tensor(int8),"685_scale": tensor(float),"685_zero_point": tensor(int8),) -> ("685_DequantizeLinear_Output",) , Error Unrecognized attribute: axis for operator Dequa
+ntizeLinear
+**********************
+Windows PowerShell transcript end
+End time: 20260703092408
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260703093221
+Username: VRANDUK\jasko
+RunAs User: VRANDUK\jasko
+Configuration Name: 
+Machine: VRANDUK (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File .\commands_quantize.ps1
+Process ID: 9576
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is outputs\results\run_log_quant.txt
+
+=== python experiments/quantize_arcface.py ===
+WARNING:root:Axis 1 is out-of-range for weight 'layer3.10.bn1.weight' with rank 1
+WARNING:root:Axis 1 is out-of-range for weight 'layer3.11.bn1.weight' with rank 1
+WARNING:root:Axis 1 is out-of-range for weight 'layer3.12.bn1.weight' with rank 1
+WARNING:root:Axis 1 is out-of-range for weight 'layer3.13.bn1.weight' with rank 1
+WARNING:root:Axis 1 is out-of-range for weight 'layer4.0.bn1.weight' with rank 1
+WARNING:root:Axis 1 is out-of-range for weight 'layer4.1.bn1.weight' with rank 1
+WARNING:root:Axis 1 is out-of-range for weight 'layer4.2.bn1.weight' with rank 1
+WARNING:root:Axis 1 is out-of-range for weight 'bn2.weight' with rank 1
+WARNING:root:Axis 1 is out-of-range for weight 'features.weight' with rank 1
+size  : fp32 166.3 MB -> int8 41.9 MB (3.97x smaller)
+cosine(fp32, int8) on 64 held-out images: mean 0.9821  min 0.9720
+CPU latency (batch 1): fp32 77.6 ms -> int8 19.0 ms (4.08x speedup)
+
+=== python experiments/build_embeddings.py --dataset lfw_q8 --bin data\insightface_bins\lfw.bin --arcface int8 ===
+
+
+=== python experiments/build_embeddings.py --dataset cplfw_q8 --bin data\insightface_bins\cplfw.bin --arcface int8 ===
+
+
+=== python experiments/build_embeddings.py --dataset xqlfw_q8 --bin data\insightface_bins\xqlfw.bin --arcface int8 ===
+
+
+=== python experiments/build_embeddings.py --dataset calfw_q8 --bin data\insightface_bins\calfw.bin --arcface int8 ===
+
+
+=== python experiments/build_embeddings.py --dataset cfp_fp_q8 --bin data\insightface_bins\cfp_fp.bin --arcface int8 ===
+
+
+=== python experiments/build_embeddings.py --dataset sllfw_q8 --source sllfw --arcface int8 ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_lfw_q8.npz --models arcface --out rd_lfw_q8arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_lfw_q8.npz --out rd_lfw_q8.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_cplfw_q8.npz --models arcface --out rd_cplfw_q8arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_cplfw_q8.npz --out rd_cplfw_q8.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_xqlfw_q8.npz --models arcface --out rd_xqlfw_q8arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_xqlfw_q8.npz --out rd_xqlfw_q8.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_calfw_q8.npz --models arcface --out rd_calfw_q8arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_calfw_q8.npz --out rd_calfw_q8.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_cfp_fp_q8.npz --models arcface --out rd_cfp_fp_q8arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_cfp_fp_q8.npz --out rd_cfp_fp_q8.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_sllfw_q8.npz --models arcface --out rd_sllfw_q8arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_sllfw_q8.npz --out rd_sllfw_q8.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_cplfw.npz --models arcface --out rd_cplfw_arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_xqlfw.npz --models arcface --out rd_xqlfw_arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_calfw.npz --models arcface --out rd_calfw_arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_cfp_fp.npz --models arcface --out rd_cfp_fp_arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/emb_sllfw.npz --models arcface --out rd_sllfw_arc.csv ===
+
+
+=== python experiments/run_rate_distortion.py --emb outputs/embeddings/lfw_embeddings.npz --models arcface --out rd_lfw_arc.csv ===
+
+**********************
+Windows PowerShell transcript end
+End time: 20260703100616
+**********************

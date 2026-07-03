@@ -68,6 +68,17 @@ def load_arcface_onnx():
                                 providers=providers)
 
 
+def load_arcface_int8():
+    """Static-PTQ INT8 (QDQ) w600k_r50 from experiments/quantize_arcface.py.
+    Runs on the CPU EP deliberately: CPU is the deployment target of int8,
+    and the CUDA EP would just dequantize the QDQ nodes anyway."""
+    import onnxruntime as ort
+    so = ort.SessionOptions()
+    so.log_severity_level = 3
+    return ort.InferenceSession(str(C.MODELS["arcface_int8"]), sess_options=so,
+                                providers=["CPUExecutionProvider"])
+
+
 def load_magface():
     _add_repo_paths()
     from inference.network_inf import builder_inf
@@ -128,6 +139,22 @@ def embed_arcface_onnx(sess, images, batch=BATCH):
     return out
 
 
+def embed_arcface_int8(sess, images, batch=BATCH):
+    """Quantized w600k_r50: SAME preprocessing as buffalo (RGB, (x-127.5)/127.5)
+    -- NOT the raw 0-255 convention of the ms1mv2 control."""
+    inp = sess.get_inputs()[0].name
+    out = np.zeros((len(images), 512), np.float32)
+    valid = _valid_idxs(images)
+    for s in tqdm(range(0, len(valid), batch), desc="  arcface(int8)"):
+        idxs = valid[s:s + batch]
+        x = np.stack([((cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB).astype(np.float32)
+                        - 127.5) / 127.5).transpose(2, 0, 1) for i in idxs])
+        y = _l2_rows(sess.run(None, {inp: x})[0].astype(np.float32))
+        for j, i in enumerate(idxs):
+            out[i] = y[j]
+    return out
+
+
 @torch.no_grad()
 def _embed_torch(model, images, pre_fn, desc, batch=BATCH):
     out = np.zeros((len(images), 512), np.float32)
@@ -152,6 +179,8 @@ def embed_all(images, arcface="buffalo", batch=BATCH):
     res = {}
     if arcface == "ms1mv2":
         sess = load_arcface_onnx(); res["arcface"] = embed_arcface_onnx(sess, images, batch); del sess
+    elif arcface == "int8":
+        sess = load_arcface_int8(); res["arcface"] = embed_arcface_int8(sess, images, batch); del sess
     else:
         rec = load_arcface(); res["arcface"] = embed_arcface(rec, images, batch); del rec
     mag = load_magface(); res["magface"] = _embed_torch(mag, images, _pre_magface, "  magface", batch); del mag

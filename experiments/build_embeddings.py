@@ -27,9 +27,10 @@ def main():
     ap.add_argument("--swap-rb", action="store_true", help="bin source: flip R/B if cross-check is off")
     ap.add_argument("--max-distractors", type=int, default=None,
                     help="tinyface source: cap distractor gallery (start small, e.g. 20000)")
-    ap.add_argument("--arcface", choices=["buffalo", "ms1mv2"], default="buffalo",
+    ap.add_argument("--arcface", choices=["buffalo", "ms1mv2", "int8"], default="buffalo",
                     help="'buffalo' = R50/Glint360K (seminar default); "
-                         "'ms1mv2' = R100/MS1MV2 (same-training-set control)")
+                         "'ms1mv2' = R100/MS1MV2 (same-training-set control); "
+                         "'int8' = PTQ-quantized buffalo (network compression)")
     ap.add_argument("--batch", type=int, default=64, help="inference batch size")
     ap.add_argument("--force", action="store_true",
                     help="rebuild even if emb_<dataset>.npz already exists")

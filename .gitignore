@@ -33,3 +33,6 @@ outputs/error_crops/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Plots
+outputs/tables
