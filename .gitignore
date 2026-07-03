@@ -36,3 +36,6 @@ Thumbs.db
 
 # Plots
 outputs/tables
+
+# ---- Paper drafts (working copies next to the plots; not part of the repo) ----
+outputs/figures/paper_*

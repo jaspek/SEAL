@@ -189,14 +189,14 @@ def t_control():
         rows.append(f"{NICE[d]} & {pct(ab)} & {pct(ac)} & {dl(ac, ab)} & "
                     f"{pct(fb)} & {pct(fc)} & {dl(fc, fb)}")
     write("tab_control",
-          "Same-training-set control: replacing ArcFace (iResNet50, Glint360K) "
+          "Same-training-set control: replacing ArcFace (iResNet50, WebFace600K) "
           "with the iResNet100/MS1MV2 checkpoint, so all three models share "
           "training data. Both ArcFace variants are equivalent on LFW "
-          "($\\sim$99.8\\% on official crops), yet the Glint360K model is far "
+          "($\\sim$99.8\\% on official crops), yet the WebFace600K model is far "
           "more robust on cross-quality data -- the training-set difference, not "
           "the loss, carries the robustness.",
           "tab:control",
-          r"Dataset & Arc (Glint) & Arc (MS1MV2) & $\Delta$ & Fused (Glint) & "
+          r"Dataset & Arc (W600K) & Arc (MS1MV2) & $\Delta$ & Fused (W600K) & "
           r"Fused (MS1MV2) & $\Delta$",
           rows, "lcccccc")
 
@@ -265,6 +265,92 @@ def t_rabitq():
           "third of the gap to float32 at equal bits.",
           "tab:rabitq_1n",
           r"Method & Bits & Rank-1 (\%) & Rank-5 (\%)", rows, "lccc")
+
+
+def t_pruning_ft():
+    ft, pr = _csv("pruning_finetuned.csv"), _csv("pruning_sweep.csv")
+    if ft is None or pr is None:
+        print("SKIP tab_pruning_ft: pruning_finetuned.csv / pruning_sweep.csv missing")
+        return
+    mag = ft[ft["config"] == "magface"]
+    base = pr[(pr["criterion"] == "none") & (pr["config"] == "magface")]
+
+    def bval(d, col):
+        return float(base[base["dataset"] == d][col].iloc[0])
+
+    rows = [rf"0\,\% (unpruned) & 65.2 & 12.12 & {pct(bval('lfw', 'acc'))} & "
+            rf"{pct(bval('xqlfw', 'acc'))} & {pct(bval('xqlfw', 'tar_far0.01'))}"]
+    for ratio in sorted(mag["ratio"].unique()):
+        m = mag[np.isclose(mag["ratio"], ratio)]
+
+        def cellv(d, col):
+            r = m[m["dataset"] == d]
+            if r.empty:
+                return "--"
+            if float(r["acc"].iloc[0]) < 0.55:
+                return r"\textit{coll.}" if col == "acc" else "--"
+            v = float(r[col].iloc[0])
+            return f"{pct(v)} ({dl(v, bval(d, col))})"
+
+        rows.append(rf"{int(round(ratio * 100))}\,\% & "
+                    rf"{float(m['params_m'].iloc[0]):.1f} & "
+                    rf"{float(m['macs_g'].iloc[0]):.2f} & {cellv('lfw', 'acc')} & "
+                    rf"{cellv('xqlfw', 'acc')} & {cellv('xqlfw', 'tar_far0.01')}")
+    write("tab_pruning_ft",
+          "Pruning with light recovery: after one-shot L1 pruning, each network "
+          "is fine-tuned for ONE epoch of label-free self-distillation on "
+          "CASIA-WebFace (490k images, disjoint from all evaluation sets), "
+          "matching the unpruned teacher's embeddings (changes vs.\\ unpruned in "
+          "parentheses). Accuracy recovers almost fully at 10--30\\,\\% -- but "
+          "the strict operating point does not: XQLFW TAR@FAR=1\\% stays "
+          "8--13 points below baseline. Adaptation repairs the average, not the "
+          "tail. At 50\\,\\% the distillation plateaus and the network stays "
+          "collapsed.",
+          "tab:pruning_ft",
+          r"Ratio & Params (M) & MACs (G) & LFW acc.\ & XQLFW acc.\ & "
+          r"XQLFW TAR@1\%",
+          rows, "lccccc")
+
+
+def t_matched():
+    """Fair three-way loss comparison: the ctrl bundles hold training data
+    (MS1MV2) and backbone depth (iResNet100/100/101) fixed."""
+    ov = pd.read_csv(C.RESULTS_DIR / "overlap_summary.csv").set_index("dataset")
+    sigc = _csv("significance_ctrl.csv")
+
+    def mstars(d):
+        if sigc is None:
+            return ""
+        m = sigc[(sigc["dataset"] == f"{d}_ctrl") & (sigc["A"] == "arcface")
+                 & (sigc["B"] == "adaface")]
+        if m.empty:
+            return ""
+        return _mark(float(m["p_mcnemar"].iloc[0]), float(m["p_nb"].iloc[0]))
+
+    rows = []
+    for d in DATASETS:
+        key = f"{d}_ctrl"
+        if key not in ov.index:
+            continue
+        o = ov.loc[key]
+        rows.append(f"{NICE[d]} & {pct(o['acc_arcface'])} & "
+                    f"{pct(o['acc_magface'])} & {pct(o['acc_adaface'])} & "
+                    f"{dl(o['acc_adaface'], o['acc_arcface'])}{mstars(d)}")
+    if not rows:
+        print("SKIP tab_matched: no *_ctrl rows in overlap_summary.csv")
+        return
+    write("tab_matched",
+          "Matched-training comparison of the three losses: every model trained "
+          "on MS1MV2 with iResNet backbones of comparable depth "
+          "(ArcFace/MagFace: iResNet100; AdaFace: iResNet101). With training "
+          "data equalized, AdaFace is the strongest model on every benchmark -- "
+          "the ArcFace dominance elsewhere in this paper is a training-data "
+          "advantage (WebFace600K, 600k identities vs.\\ 85k), not a property "
+          "of the loss. Significance marks compare AdaFace vs.\\ ArcFace where "
+          "\\texttt{significance\\_ctrl.csv} is available.",
+          "tab:matched",
+          r"Dataset & ArcFace & MagFace & AdaFace & $\Delta$ (Ada$-$Arc)",
+          rows, "lcccc")
 
 
 def t_fusion_ablation():
@@ -401,10 +487,10 @@ def t_pruning():
 # narrative order: setup -> fusion story -> compression story -> compressor
 # upgrade -> network compression
 ORDER = ["tab_baselines", "tab_overlap", "tab_fusion_learned",
-         "tab_fusion_ablation", "tab_control",
+         "tab_fusion_ablation", "tab_control", "tab_matched",
          "tab_compression_acc", "tab_compression_tar", "tab_tinyface",
          "tab_gallery", "tab_rabitq_11", "tab_rabitq_1n",
-         "tab_quant", "tab_pruning"]
+         "tab_quant", "tab_pruning", "tab_pruning_ft"]
 
 
 def fig_block(files, caption, label, width):
@@ -444,7 +530,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     t_baselines(); t_compression_acc(); t_compression_tar(); t_overlap()
     t_fusion_learned(); t_control(); t_tinyface(); t_gallery(); t_rabitq()
-    t_fusion_ablation(); t_quant(); t_pruning()
+    t_fusion_ablation(); t_quant(); t_pruning(); t_pruning_ft(); t_matched()
     names = [n for n in ORDER if (OUT / f"{n}.tex").exists()]
     names += sorted(p.stem for p in OUT.glob("tab_*.tex") if p.stem not in names)
     (OUT / "tables_all.tex").write_text(

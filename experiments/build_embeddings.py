@@ -28,7 +28,7 @@ def main():
     ap.add_argument("--max-distractors", type=int, default=None,
                     help="tinyface source: cap distractor gallery (start small, e.g. 20000)")
     ap.add_argument("--arcface", choices=["buffalo", "ms1mv2", "int8"], default="buffalo",
-                    help="'buffalo' = R50/Glint360K (seminar default); "
+                    help="'buffalo' = R50/WebFace600K (seminar default); "
                          "'ms1mv2' = R100/MS1MV2 (same-training-set control); "
                          "'int8' = PTQ-quantized buffalo (network compression)")
     ap.add_argument("--batch", type=int, default=64, help="inference batch size")
