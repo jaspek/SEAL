@@ -1,0 +1,45 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260704083034
+Username: VRANDUK\jasko
+RunAs User: VRANDUK\jasko
+Configuration Name: 
+Machine: VRANDUK (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File .\commands_prune_adaface.ps1
+Process ID: 15984
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is outputs\results\run_log_prune_adaface.txt
+
+=== python experiments/run_pruning.py --model adaface ===
+  adaface[lfw]: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 188/188 [00:16<00:00, 11.60it/s]
+    lfw/adaface: acc 0.5000  tar@1% 0.1183
+    lfw/fused: acc 0.9978  tar@1% 0.9973
+  adaface[xqlfw]: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 188/188 [00:16<00:00, 11.73it/s]
+    xqlfw/adaface: acc 0.5000  tar@1% 0.0050
+    xqlfw/fused: acc 0.8482  tar@1% 0.7060
+
+=== adaface  criterion=random  ratio=70% ===
+  params 65.2M -> 8.5M   MACs 12.11G -> 1.08G
+  adaface[lfw]: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 188/188 [00:11<00:00, 15.84it/s]
+    lfw/adaface: acc 0.5000  tar@1% 0.0547
+    lfw/fused: acc 0.9978  tar@1% 0.9973
+  adaface[xqlfw]: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 188/188 [00:11<00:00, 16.19it/s]
+    xqlfw/adaface: acc 0.5000  tar@1% 0.0093
+    xqlfw/fused: acc 0.8463  tar@1% 0.7060
+
+wrote C:\Users\jasko\Programming\Python\SEAL\outputs\results\pruning_sweep_adaface.csv
+
+=== python experiments/finetune_pruned.py --model adaface --ratios 0.1 0.3 ===
+
+**********************
+Windows PowerShell transcript end
+End time: 20260704104722
+**********************

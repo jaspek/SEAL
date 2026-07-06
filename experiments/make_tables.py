@@ -280,8 +280,10 @@ def t_pruning_ft():
 
     rows = [rf"0\,\% (unpruned) & 65.2 & 12.12 & {pct(bval('lfw', 'acc'))} & "
             rf"{pct(bval('xqlfw', 'acc'))} & {pct(bval('xqlfw', 'tar_far0.01'))}"]
-    for ratio in sorted(mag["ratio"].unique()):
-        m = mag[np.isclose(mag["ratio"], ratio)]
+    combos = sorted({(float(r["ratio"]), int(r["epochs"]))
+                     for _, r in mag.iterrows()})
+    for ratio, ep in combos:
+        m = mag[np.isclose(mag["ratio"], ratio) & (mag["epochs"] == ep)]
 
         def cellv(d, col):
             r = m[m["dataset"] == d]
@@ -292,24 +294,70 @@ def t_pruning_ft():
             v = float(r[col].iloc[0])
             return f"{pct(v)} ({dl(v, bval(d, col))})"
 
-        rows.append(rf"{int(round(ratio * 100))}\,\% & "
+        rows.append(rf"{int(round(ratio * 100))}\,\% + distill ({ep}\,ep) & "
                     rf"{float(m['params_m'].iloc[0]):.1f} & "
                     rf"{float(m['macs_g'].iloc[0]):.2f} & {cellv('lfw', 'acc')} & "
                     rf"{cellv('xqlfw', 'acc')} & {cellv('xqlfw', 'tar_far0.01')}")
     write("tab_pruning_ft",
-          "Pruning with light recovery: after one-shot L1 pruning, each network "
-          "is fine-tuned for ONE epoch of label-free self-distillation on "
-          "CASIA-WebFace (490k images, disjoint from all evaluation sets), "
-          "matching the unpruned teacher's embeddings (changes vs.\\ unpruned in "
-          "parentheses). Accuracy recovers almost fully at 10--30\\,\\% -- but "
-          "the strict operating point does not: XQLFW TAR@FAR=1\\% stays "
-          "8--13 points below baseline. Adaptation repairs the average, not the "
-          "tail. At 50\\,\\% the distillation plateaus and the network stays "
-          "collapsed.",
+          "Pruning with recovery by label-free self-distillation on "
+          "CASIA-WebFace (490k images, disjoint from all evaluation sets; "
+          "changes vs.\\ unpruned in parentheses). One epoch restores accuracy "
+          "almost fully at 10--30\\,\\% while XQLFW TAR@FAR=1\\% stays 8--13 "
+          "points down. At 50\\,\\% one epoch plateaus (collapsed), but eight "
+          "epochs at a higher learning rate break through -- and recover "
+          "\\emph{hierarchically}: LFW accuracy $-0.6$, XQLFW accuracy $-7.3$, "
+          "XQLFW TAR $-29.9$. Budget explains the collapse; capacity explains "
+          "the tail.",
           "tab:pruning_ft",
-          r"Ratio & Params (M) & MACs (G) & LFW acc.\ & XQLFW acc.\ & "
+          r"Config & Params (M) & MACs (G) & LFW acc.\ & XQLFW acc.\ & "
           r"XQLFW TAR@1\%",
           rows, "lccccc")
+
+
+def t_pruning_ada():
+    sw, ft = _csv("pruning_sweep_adaface.csv"), _csv("pruning_finetuned_adaface.csv")
+    if sw is None or ft is None:
+        print("SKIP tab_pruning_ada: adaface pruning CSVs not found")
+        return
+
+    def get(df, crit, ratio, dataset, config, col):
+        m = df[(df["criterion"] == crit) & np.isclose(df["ratio"], ratio)
+               & (df["dataset"] == dataset) & (df["config"] == config)]
+        return None if m.empty else float(m[col].iloc[0])
+
+    def acc_cell(v):
+        if v is None:
+            return "--"
+        return r"\textit{coll.}" if v < 0.55 else pct(v)
+
+    def row(label, df, crit, ratio):
+        la = get(df, crit, ratio, "lfw", "adaface", "acc")
+        xa = get(df, crit, ratio, "xqlfw", "adaface", "acc")
+        xt = get(df, crit, ratio, "xqlfw", "adaface", "tar_far0.01")
+        xf = get(df, crit, ratio, "xqlfw", "fused", "acc")
+        tar = "--" if (xa is None or xa < 0.55) else pct(xt)
+        return (f"{label} & {acc_cell(la)} & {acc_cell(xa)} & {tar} & "
+                f"{'--' if xf is None else pct(xf)}")
+
+    rows = [row("unpruned", sw, "none", 0.0)]
+    for r in (0.1, 0.3):
+        rows.append(row(rf"{int(r * 100)}\,\% one-shot", sw, "l1", r))
+        rows.append(row(rf"{int(r * 100)}\,\% + distill", ft, "l1", r))
+    rows.append(row(r"70\,\% one-shot", sw, "l1", 0.7))
+    write("tab_pruning_ada",
+          "Replication on AdaFace (L1 criterion). One-shot collapse is even "
+          "more severe than for MagFace (10\\,\\% destroys LFW as well), and "
+          "light distillation again restores accuracy but not the strict "
+          "operating point (XQLFW TAR stays 7--15 points down). The fused "
+          "column confirms the dilution mechanism bidirectionally: collapsing "
+          "the HELPFUL member lowers the fused template onto the arc+mag "
+          "two-model fusion (its TAR of 70.6 matches exactly) -- the mirror "
+          "image of the MagFace case, where collapsing the harmful member "
+          "raised it.",
+          "tab:pruning_ada",
+          r"AdaFace config & LFW acc.\ & XQLFW acc.\ & XQLFW TAR@1\% & "
+          r"Fused XQLFW",
+          rows, "lcccc")
 
 
 def t_matched():
@@ -490,7 +538,7 @@ ORDER = ["tab_baselines", "tab_overlap", "tab_fusion_learned",
          "tab_fusion_ablation", "tab_control", "tab_matched",
          "tab_compression_acc", "tab_compression_tar", "tab_tinyface",
          "tab_gallery", "tab_rabitq_11", "tab_rabitq_1n",
-         "tab_quant", "tab_pruning", "tab_pruning_ft"]
+         "tab_quant", "tab_pruning", "tab_pruning_ft", "tab_pruning_ada"]
 
 
 def fig_block(files, caption, label, width):
@@ -530,7 +578,8 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     t_baselines(); t_compression_acc(); t_compression_tar(); t_overlap()
     t_fusion_learned(); t_control(); t_tinyface(); t_gallery(); t_rabitq()
-    t_fusion_ablation(); t_quant(); t_pruning(); t_pruning_ft(); t_matched()
+    t_fusion_ablation(); t_quant(); t_pruning(); t_pruning_ft()
+    t_pruning_ada(); t_matched()
     names = [n for n in ORDER if (OUT / f"{n}.tex").exists()]
     names += sorted(p.stem for p in OUT.glob("tab_*.tex") if p.stem not in names)
     (OUT / "tables_all.tex").write_text(

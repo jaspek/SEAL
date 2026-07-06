@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 import cv2
 import torch
+import torch_pruning as tp
 from torch.utils.data import Dataset, DataLoader
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -137,7 +138,7 @@ def _emb(model, x):
     return torch.nn.functional.normalize(y.float(), dim=1)
 
 
-def distill(student, teacher, loader, epochs, lr, device):
+def distill(student, teacher, loader, epochs, lr, device, ckpt=None):
     opt = torch.optim.AdamW(student.parameters(), lr=lr)
     scaler = torch.cuda.amp.GradScaler(enabled=device == "cuda")
     student.train()
@@ -161,6 +162,9 @@ def distill(student, teacher, loader, epochs, lr, device):
                 print(f"    ep {ep + 1} step {step}: loss {running / 200:.4f}"
                       f"  ({ips:.0f} img/s)")
                 running, t0 = 0.0, time.perf_counter()
+        if ckpt is not None:                       # survive freezes/crashes
+            torch.save(student, ckpt)
+            print(f"    ep {ep + 1} done -> checkpoint {ckpt}")
     student.eval()
 
 
@@ -181,6 +185,9 @@ def main():
                     help="cap on training images (for quick runs)")
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--resume", default=None,
+                    help="continue distilling from a saved checkpoint .pt "
+                         "(use with exactly one --ratios value)")
     ap.add_argument("--out", default=None,
                     help="default: pruning_finetuned.csv (magface) / "
                          "pruning_finetuned_<model>.csv")
@@ -212,15 +219,24 @@ def main():
     for ratio in args.ratios:
         print(f"\n=== prune {args.model} {args.criterion} @ {ratio:.0%} "
               f"+ distill {args.epochs} epoch(s) ===")
-        student, bmacs, bparams, macs, params = prune_model(
-            args.model, ratio, args.criterion)
+        if args.resume:
+            if len(args.ratios) != 1:
+                raise SystemExit("--resume needs exactly one --ratios value")
+            M._add_repo_paths()
+            student = torch.load(args.resume, map_location=device)
+            ex = torch.randn(1, 3, 112, 112, device=device)
+            bmacs, bparams = tp.utils.count_ops_and_params(teacher, ex)
+            macs, params = tp.utils.count_ops_and_params(student, ex)
+            print(f"  resumed from {args.resume}")
+        else:
+            student, bmacs, bparams, macs, params = prune_model(
+                args.model, ratio, args.criterion)
         print(f"  params {bparams / 1e6:.1f}M -> {params / 1e6:.1f}M   "
               f"MACs {bmacs / 1e9:.2f}G -> {macs / 1e9:.2f}G")
-        distill(student, teacher, loader, args.epochs, args.lr, device)
-
         ckpt = C.REPO_ROOT / "outputs" / "models" / \
             f"{args.model}_pruned_{args.criterion}{int(round(ratio * 100))}_ft.pt"
         ckpt.parent.mkdir(parents=True, exist_ok=True)
+        distill(student, teacher, loader, args.epochs, args.lr, device, ckpt=ckpt)
         torch.save(student, ckpt)          # whole module: pruned shapes included
         print(f"  saved {ckpt}")
 
