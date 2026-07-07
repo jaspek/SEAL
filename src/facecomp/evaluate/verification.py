@@ -37,3 +37,32 @@ def roc_metrics(emb, pair_idx, fars=(1e-2, 1e-3)):
         j = max(np.searchsorted(fpr, far, side="right") - 1, 0)
         out[f"tar_far{far:g}"] = round(float(tpr[j]), 6)
     return out
+
+
+def tar_at_far(scores, labels, far):
+    """TAR at a target FAR from pooled pair scores/labels (labels: 1=genuine)."""
+    from sklearn.metrics import roc_curve
+    fpr, tpr, _ = roc_curve(labels, scores)
+    j = max(np.searchsorted(fpr, far, side="right") - 1, 0)
+    return float(tpr[j])
+
+
+def paired_tar_bootstrap(scores_a, scores_b, labels, far=0.01, n_boot=1000, seed=0):
+    """Paired pair-level bootstrap CI on TAR@FAR(A) - TAR@FAR(B). Pure numpy on
+    cached score vectors — the uncertainty the paper's TAR claims currently lack.
+    Returns delta, 95% CI, and a two-sided bootstrap p-value for delta != 0."""
+    scores_a = np.asarray(scores_a)
+    scores_b = np.asarray(scores_b)
+    labels = np.asarray(labels)
+    rng = np.random.default_rng(seed)
+    n = len(labels)
+    base = tar_at_far(scores_a, labels, far) - tar_at_far(scores_b, labels, far)
+    d = np.empty(n_boot)
+    for i in range(n_boot):
+        idx = rng.integers(0, n, n)
+        la = labels[idx]
+        d[i] = tar_at_far(scores_a[idx], la, far) - tar_at_far(scores_b[idx], la, far)
+    lo, hi = np.percentile(d, [2.5, 97.5])
+    p = 2.0 * min((d <= 0).mean(), (d >= 0).mean())
+    return {"delta": round(base, 5), "ci_lo": round(float(lo), 5),
+            "ci_hi": round(float(hi), 5), "p_boot": round(float(min(p, 1.0)), 5)}
