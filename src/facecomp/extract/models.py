@@ -156,8 +156,12 @@ def embed_arcface_int8(sess, images, batch=BATCH):
 
 
 @torch.no_grad()
-def _embed_torch(model, images, pre_fn, desc, batch=BATCH):
+def _embed_torch(model, images, pre_fn, desc, batch=BATCH, return_norm=False):
+    """Batched torch embedding. return_norm=True also returns the pre-L2 feature
+    magnitude per image — for MagFace/AdaFace this IS the quality signal the paper
+    cites in Related Work but never saves (used by the per-input quality gate)."""
     out = np.zeros((len(images), 512), np.float32)
+    norms = np.zeros(len(images), np.float32)
     valid = _valid_idxs(images)
     for s in tqdm(range(0, len(valid), batch), desc=desc):
         idxs = valid[s:s + batch]
@@ -167,24 +171,33 @@ def _embed_torch(model, images, pre_fn, desc, batch=BATCH):
         y = model(x)
         if isinstance(y, tuple):
             y = y[0]
-        rows = _l2_rows(y.float().cpu().numpy())
+        yc = y.float().cpu().numpy()
+        n = np.linalg.norm(yc, axis=1)
+        rows = _l2_rows(yc)
         for j, i in enumerate(idxs):
             out[i] = rows[j]
-    return out
+            norms[i] = n[j]
+    return (out, norms) if return_norm else out
 
 
-def embed_all(images, arcface="buffalo", batch=BATCH):
-    """dict name -> (N,512). Loads each model, frees it before the next (VRAM-friendly)."""
+def embed_all(images, arcface="buffalo", batch=BATCH, with_norms=False):
+    """dict name -> (N,512). Loads each model, frees it before the next (VRAM-friendly).
+    with_norms=True additionally returns a dict of per-image MagFace/AdaFace feature
+    magnitudes (the ONNX ArcFace paths do not expose a comparable magnitude)."""
     print(f"  device: {_DEV}  (batch={batch})")
-    res = {}
+    res, norm = {}, {}
     if arcface == "ms1mv2":
         sess = load_arcface_onnx(); res["arcface"] = embed_arcface_onnx(sess, images, batch); del sess
     elif arcface == "int8":
         sess = load_arcface_int8(); res["arcface"] = embed_arcface_int8(sess, images, batch); del sess
     else:
         rec = load_arcface(); res["arcface"] = embed_arcface(rec, images, batch); del rec
-    mag = load_magface(); res["magface"] = _embed_torch(mag, images, _pre_magface, "  magface", batch); del mag
+    mag = load_magface()
+    res["magface"], norm["magface"] = _embed_torch(mag, images, _pre_magface, "  magface", batch, return_norm=True)
+    del mag
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-    ada = load_adaface(); res["adaface"] = _embed_torch(ada, images, _pre_adaface, "  adaface", batch); del ada
-    return res
+    ada = load_adaface()
+    res["adaface"], norm["adaface"] = _embed_torch(ada, images, _pre_adaface, "  adaface", batch, return_norm=True)
+    del ada
+    return (res, norm) if with_norms else res
