@@ -7,6 +7,9 @@ Examples:
   python experiments/build_embeddings.py --dataset cplfw
   python experiments/build_embeddings.py --dataset sllfw    --source sllfw
   python experiments/build_embeddings.py --dataset tinyface --source tinyface --max-distractors 20000
+
+Per-image MagFace/AdaFace feature magnitudes are saved as <model>_norm arrays
+(the quality signal the per-input gate needs); disable with --no-norms.
 """
 import os
 os.environ.setdefault("OPENCV_LOG_LEVEL", "SILENT")   # silence cv2 findDecoder spam
@@ -32,6 +35,8 @@ def main():
                          "'ms1mv2' = R100/MS1MV2 (same-training-set control); "
                          "'int8' = PTQ-quantized buffalo (network compression)")
     ap.add_argument("--batch", type=int, default=64, help="inference batch size")
+    ap.add_argument("--no-norms", action="store_true",
+                    help="do not save MagFace/AdaFace feature magnitudes")
     ap.add_argument("--force", action="store_true",
                     help="rebuild even if emb_<dataset>.npz already exists")
     args = ap.parse_args()
@@ -58,10 +63,15 @@ def main():
         images, extra["labels"], extra["split"] = tinyface.load_tinyface(
             C.DATA["tinyface"], args.max_distractors)
 
-    emb = models.embed_all(images, arcface=args.arcface, batch=args.batch)
+    save_norms = not args.no_norms
+    result = models.embed_all(images, arcface=args.arcface, batch=args.batch,
+                              with_norms=save_norms)
+    emb, norm = result if save_norms else (result, {})
 
     C.ensure_dirs()
-    np.savez_compressed(out, **{k: v.astype(np.float32) for k, v in emb.items()}, **extra)
+    norm_arrays = {f"{m}_norm": v.astype(np.float32) for m, v in norm.items()}
+    np.savez_compressed(out, **{k: v.astype(np.float32) for k, v in emb.items()},
+                        **norm_arrays, **extra)
     print(f"wrote {out}")
 
 
