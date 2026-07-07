@@ -100,21 +100,25 @@ def analyze_file(path):
     w = np.mean(weights, axis=0)
     w = w / (np.abs(w).sum() + 1e-12)
     accs = {k: float(v.mean()) for k, v in correct.items()}
-    _, _, p_learned = S.mcnemar_exact(correct["learned"], correct["best_single"])
+    _, _, p_vs_single = S.mcnemar_exact(correct["learned"], correct["best_single"])
+    _, _, p_vs_mean = S.mcnemar_exact(correct["learned"], correct["score_mean"])
     _, _, p_aug = S.mcnemar_exact(correct["learned_aug"], correct["best_single"])
     _, _, p_mlp = S.mcnemar_exact(correct["mlp"], correct["best_single"])
 
     row = {"dataset": name,
            **{f"acc_{k}": round(v, 6) for k, v in accs.items()},
-           "gain_learned_vs_single": round(accs["learned"] - accs["best_single"], 6),
+           # original columns (kept verbatim so make_tables.py still works):
+           "gain_vs_best_single": round(accs["learned"] - accs["best_single"], 6),
+           "gain_vs_score_mean": round(accs["learned"] - accs["score_mean"], 6),
+           "p_vs_best_single": p_vs_single, "p_vs_score_mean": p_vs_mean,
+           # new nonlinear / disagreement-feature columns:
            "gain_aug_vs_single": round(accs["learned_aug"] - accs["best_single"], 6),
            "gain_mlp_vs_single": round(accs["mlp"] - accs["best_single"], 6),
-           "p_learned_vs_single": p_learned, "p_aug_vs_single": p_aug,
-           "p_mlp_vs_single": p_mlp,
+           "p_aug_vs_single": p_aug, "p_mlp_vs_single": p_mlp,
            **{f"w_{m}": round(float(wi), 3) for m, wi in zip(models, w)}}
-    print(f"{name:>10}: single {accs['best_single']:.4f}  learned {accs['learned']:.4f}  "
-          f"aug {accs['learned_aug']:.4f}  mlp {accs['mlp']:.4f}  "
-          f"(gain_mlp {row['gain_mlp_vs_single']:+.4f} p={p_mlp:.2g})")
+    print(f"{name:>10}: single {accs['best_single']:.4f}  mean {accs['score_mean']:.4f}  "
+          f"learned {accs['learned']:.4f}  aug {accs['learned_aug']:.4f}  "
+          f"mlp {accs['mlp']:.4f}  (gain_mlp {row['gain_mlp_vs_single']:+.4f} p={p_mlp:.2g})")
     return row
 
 
