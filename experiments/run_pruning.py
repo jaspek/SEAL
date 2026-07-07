@@ -11,6 +11,7 @@ ships as ONNX, which DepGraph cannot trace. 'random' is the control criterion.
   python experiments/run_pruning.py                          # magface sweep
   python experiments/run_pruning.py --model adaface          # adaface sweep
   python experiments/run_pruning.py --ratios 0.1 0.3 --criteria l1 --datasets xqlfw
+  python experiments/run_pruning.py --criteria l1 --global-pruning   # non-uniform
 
 Per dataset it scores the pruned model alone AND the fused template with the
 pruned model spliced into its slot (needs emb_lfw_bin.npz / emb_<d>.npz for
@@ -55,10 +56,13 @@ def importance(name):
     raise SystemExit(f"unknown criterion {name!r}")
 
 
-def prune_model(model_name, ratio, crit):
+def prune_model(model_name, ratio, crit, global_pruning=False):
     """Fresh model, pruned in place. The Linear head and BatchNorm1d stay
     ignored so the embedding remains 512-d; DepGraph adjusts their in-features
-    automatically when the last conv block loses channels."""
+    automatically when the last conv block loses channels.
+
+    global_pruning=True ranks channels across ALL layers jointly (non-uniform
+    allocation) instead of applying the same ratio to every layer."""
     model = PRUNABLE[model_name][0]()
     ex = torch.randn(1, 3, 112, 112, device=next(model.parameters()).device)
     base_macs, base_params = tp.utils.count_ops_and_params(model, ex)
@@ -66,7 +70,7 @@ def prune_model(model_name, ratio, crit):
         ignored = [m for m in model.modules()
                    if isinstance(m, (torch.nn.Linear, torch.nn.BatchNorm1d))]
         kw = dict(importance=importance(crit), ignored_layers=ignored,
-                  global_pruning=False)
+                  global_pruning=global_pruning)
         try:
             pruner = tp.pruner.MetaPruner(model, ex, pruning_ratio=ratio, **kw)
         except TypeError:                                   # older torch-pruning API
@@ -117,20 +121,26 @@ def main():
     ap.add_argument("--criteria", nargs="*", default=["l1", "bnscale", "random"],
                     help="l1 | bnscale | random | fpgm (if the installed "
                          "torch-pruning provides it)")
+    ap.add_argument("--global-pruning", action="store_true",
+                    help="rank channels globally across layers (non-uniform "
+                         "allocation) instead of the same ratio in every layer")
     ap.add_argument("--out", default=None,
                     help="default: pruning_sweep.csv (magface) / pruning_sweep_<model>.csv")
     args = ap.parse_args()
     pre_fn = PRUNABLE[args.model][1]
-    out_name = args.out or ("pruning_sweep.csv" if args.model == "magface"
-                            else f"pruning_sweep_{args.model}.csv")
+    tag = "_global" if args.global_pruning else ""
+    out_name = args.out or (f"pruning_sweep{tag}.csv" if args.model == "magface"
+                            else f"pruning_sweep_{args.model}{tag}.csv")
 
     data = load_data(args.datasets)
     configs = [("none", 0.0)] + [(c, r) for c in args.criteria for r in args.ratios]
     rows = []
     for crit, ratio in configs:
-        print(f"\n=== {args.model}  criterion={crit}  ratio={ratio:.0%} ===")
+        print(f"\n=== {args.model}  criterion={crit}  ratio={ratio:.0%}  "
+              f"global={args.global_pruning} ===")
         try:
-            model, bmacs, bparams, macs, params = prune_model(args.model, ratio, crit)
+            model, bmacs, bparams, macs, params = prune_model(
+                args.model, ratio, crit, global_pruning=args.global_pruning)
         except Exception as e:
             print(f"  PRUNE FAILED: {e}")
             rows.append({"model": args.model, "criterion": crit, "ratio": ratio,
@@ -146,6 +156,7 @@ def main():
             for cfg, embx in evals.items():
                 acc, std = ver.evaluate_lfw(embx, pair_idx)
                 row = {"model": args.model, "criterion": crit, "ratio": ratio,
+                       "global_pruning": args.global_pruning,
                        "params_m": round(params / 1e6, 2),
                        "macs_g": round(macs / 1e9, 2),
                        "dataset": d, "config": cfg,

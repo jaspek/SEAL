@@ -14,6 +14,9 @@ def main():
     ap.add_argument("--emb", default=None, help="emb_<dataset>.npz; omit for synthetic")
     ap.add_argument("--models", nargs="+", default=list(E.MODELS))
     ap.add_argument("--num-distractors", type=int, default=0)
+    ap.add_argument("--fit-emb", default=None,
+                    help="fit PCA/ITQ on THIS emb_*.npz (disjoint corpus) instead "
+                         "of the eval set itself; deployment-honest protocol")
     ap.add_argument("--out", default="rd.csv")
     ap.add_argument("--plot", action="store_true")
     ap.add_argument("--seed", type=int, default=0)
@@ -29,6 +32,13 @@ def main():
           f"labels={'y' if b.labels is not None else 'n'}, "
           f"pairs={0 if b.pair_idx is None else len(b.pair_idx)}")
 
+    fit_mat = None
+    if args.fit_emb:
+        fb = E.load_emb(args.fit_emb, models=tuple(args.models))
+        fmodels = tuple(m for m in args.models if m in fb.per_model)
+        fit_mat = fb.fuse(models=fmodels, method="concat")
+        print(f"  fitting reducers on {args.fit_emb} ({fit_mat.shape[0]} vectors)")
+
     # TinyFace ships a predefined gallery/probe/distractor split; honor it.
     gallery_idx = probe_idx = None
     num_distractors = args.num_distractors
@@ -40,7 +50,8 @@ def main():
 
     df = RD.rate_distortion(fused, labels=b.labels, pair_idx=b.pair_idx,
                             gallery_idx=gallery_idx, probe_idx=probe_idx,
-                            num_distractors=num_distractors, seed=args.seed).sort_values("bits")
+                            num_distractors=num_distractors, seed=args.seed,
+                            fit_emb=fit_mat).sort_values("bits")
     print(df.to_string(index=False))
 
     C.ensure_dirs()

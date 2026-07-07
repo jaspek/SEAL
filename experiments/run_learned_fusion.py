@@ -5,6 +5,13 @@ Per fold (standard 10-fold, thresholds/weights fit on the 9 train folds only):
   best-single : the model with the highest TRAIN accuracy, applied to test
   score-mean  : unweighted mean of the three cosine scores
   learned (LR): logistic regression over [s_arc, s_mag, s_ada]
+  learned_aug : LR over scores + pairwise |disagreements| + products + min/max
+  mlp         : small MLP over the three scores
+
+learned_aug/mlp test the paper's claim that the error diversity is "not
+accessible from scores alone": disagreement features + nonlinearity are exactly
+what a score-level gate would exploit, so if they still cannot beat best-single
+on hard data the claim gets materially stronger.
 
   python experiments/run_learned_fusion.py --buffalo
 Writes outputs/results/learned_fusion_summary.csv"""
@@ -14,6 +21,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import KFold
 
 from facecomp import config as C
@@ -33,6 +41,19 @@ def _best_thr(scores, labels):
     return best_thr, best_acc
 
 
+def _augment(M):
+    """scores + pairwise |disagreements| + products + min/max — the features a
+    score-level gate would use to route/veto."""
+    cols = [M]
+    kk = M.shape[1]
+    for i in range(kk):
+        for j in range(i + 1, kk):
+            cols.append(np.abs(M[:, i:i + 1] - M[:, j:j + 1]))
+            cols.append(M[:, i:i + 1] * M[:, j:j + 1])
+    cols += [M.min(axis=1, keepdims=True), M.max(axis=1, keepdims=True)]
+    return np.hstack(cols)
+
+
 def analyze_file(path):
     name = Path(path).stem
     for pre, post in (("emb_", ""), ("_embeddings", "")):
@@ -47,7 +68,8 @@ def analyze_file(path):
     X = np.stack([s[m] for m in models], axis=1)
 
     n = len(labels)
-    correct = {k: np.zeros(n, bool) for k in ("best_single", "score_mean", "learned")}
+    keys = ("best_single", "score_mean", "learned", "learned_aug", "mlp")
+    correct = {k: np.zeros(n, bool) for k in keys}
     weights = []
     for tr, te in KFold(n_splits=10, shuffle=False).split(labels):
         # fold-honest best single: pick the model by TRAIN accuracy
@@ -67,22 +89,32 @@ def analyze_file(path):
         correct["learned"][te] = lr.predict(X[te]) == labels[te]
         weights.append(lr.coef_[0])
 
+        # nonlinear / disagreement-feature variants
+        lr_a = LogisticRegression(max_iter=2000).fit(_augment(X[tr]), labels[tr])
+        correct["learned_aug"][te] = lr_a.predict(_augment(X[te])) == labels[te]
+
+        mlp = MLPClassifier(hidden_layer_sizes=(16,), max_iter=2000,
+                            random_state=0).fit(X[tr], labels[tr])
+        correct["mlp"][te] = mlp.predict(X[te]) == labels[te]
+
     w = np.mean(weights, axis=0)
     w = w / (np.abs(w).sum() + 1e-12)
     accs = {k: float(v.mean()) for k, v in correct.items()}
-    _, _, p_vs_single = S.mcnemar_exact(correct["learned"], correct["best_single"])
-    _, _, p_vs_mean = S.mcnemar_exact(correct["learned"], correct["score_mean"])
+    _, _, p_learned = S.mcnemar_exact(correct["learned"], correct["best_single"])
+    _, _, p_aug = S.mcnemar_exact(correct["learned_aug"], correct["best_single"])
+    _, _, p_mlp = S.mcnemar_exact(correct["mlp"], correct["best_single"])
 
     row = {"dataset": name,
            **{f"acc_{k}": round(v, 6) for k, v in accs.items()},
-           "gain_vs_best_single": round(accs["learned"] - accs["best_single"], 6),
-           "gain_vs_score_mean": round(accs["learned"] - accs["score_mean"], 6),
-           "p_vs_best_single": p_vs_single, "p_vs_score_mean": p_vs_mean,
+           "gain_learned_vs_single": round(accs["learned"] - accs["best_single"], 6),
+           "gain_aug_vs_single": round(accs["learned_aug"] - accs["best_single"], 6),
+           "gain_mlp_vs_single": round(accs["mlp"] - accs["best_single"], 6),
+           "p_learned_vs_single": p_learned, "p_aug_vs_single": p_aug,
+           "p_mlp_vs_single": p_mlp,
            **{f"w_{m}": round(float(wi), 3) for m, wi in zip(models, w)}}
-    print(f"{name:>10}: single {accs['best_single']:.4f}  mean {accs['score_mean']:.4f}  "
-          f"learned {accs['learned']:.4f}  gain {row['gain_vs_best_single']:+.4f} "
-          f"(p={p_vs_single:.2g})  weights arc/mag/ada = "
-          + "/".join(f"{x:+.2f}" for x in w))
+    print(f"{name:>10}: single {accs['best_single']:.4f}  learned {accs['learned']:.4f}  "
+          f"aug {accs['learned_aug']:.4f}  mlp {accs['mlp']:.4f}  "
+          f"(gain_mlp {row['gain_mlp_vs_single']:+.4f} p={p_mlp:.2g})")
     return row
 
 

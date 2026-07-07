@@ -3,6 +3,8 @@
 
   python experiments/run_significance.py --emb outputs/embeddings/emb_xqlfw.npz
   python experiments/run_significance.py --buffalo     # the six main datasets
+  python experiments/run_significance.py --emb outputs/embeddings/emb_xqlfw.npz \
+         --fit-emb outputs/embeddings/emb_cplfw.npz   # disjoint reducer fit
 
 Writes outputs/results/significance_summary.csv. Read `p_mcnemar`/`p_nb`:
 both < 0.05 = solid; only McNemar < 0.05 = pair-level real but fold-fragile."""
@@ -34,15 +36,18 @@ COMPARISONS = [                      # (A, B) -> tests A vs B
 ]
 
 
-def dataset_scores(b):
+def dataset_scores(b, fit_mat=None):
+    """fit_mat: if given, PCA/ITQ reducers are fit on THIS matrix (disjoint
+    corpus) rather than the eval set's own fused matrix."""
     fused = b.fuse()
+    fit_src = fit_mat if fit_mat is not None else fused
     scores, reducers = {}, {}
     for kind, k, prec in SPECS:
         red = None
         if kind != "none":
             if (kind, k) not in reducers:
                 cls = T.PCAReducer if kind == "pca" else T.ITQReducer
-                reducers[(kind, k)] = cls(k).fit(fused)
+                reducers[(kind, k)] = cls(k).fit(fit_src)
             red = reducers[(kind, k)]
         comp, _ = T.compress(fused, method=prec, dim_reducer=red)
         name = f"{prec}-1536" if kind == "none" else f"{kind}{k}-binary"
@@ -53,7 +58,7 @@ def dataset_scores(b):
     return scores
 
 
-def analyze_file(path):
+def analyze_file(path, fit_mat=None):
     name = Path(path).stem
     for pre, post in (("emb_", ""), ("_embeddings", "")):
         name = name.replace(pre, post)
@@ -62,7 +67,7 @@ def analyze_file(path):
         print(f"SKIP {name}: no pair_idx (1:N dataset)")
         return []
     labels = b.pair_idx[:, 2]
-    scores = dataset_scores(b)
+    scores = dataset_scores(b, fit_mat)
     evals = {k: S.kfold_eval(v, labels) for k, v in scores.items()}
 
     rows = []
@@ -90,6 +95,9 @@ def main():
     ap.add_argument("--emb", nargs="*", default=None)
     ap.add_argument("--buffalo", action="store_true",
                     help="the six main datasets (lfw sllfw cplfw xqlfw calfw cfp_fp)")
+    ap.add_argument("--fit-emb", default=None,
+                    help="fit PCA/ITQ on THIS emb_*.npz (disjoint corpus) instead "
+                         "of each eval set itself; deployment-honest protocol")
     ap.add_argument("--out", default="significance_summary.csv")
     args = ap.parse_args()
 
@@ -101,7 +109,13 @@ def main():
     if not paths:
         ap.error("give --emb <files> or --buffalo")
 
-    rows = [r for p in paths for r in analyze_file(p)]
+    fit_mat = None
+    if args.fit_emb:
+        fb = E.load_emb(args.fit_emb)
+        fit_mat = fb.fuse()
+        print(f"fitting reducers on {args.fit_emb} ({fit_mat.shape[0]} vectors)")
+
+    rows = [r for p in paths for r in analyze_file(p, fit_mat)]
     C.ensure_dirs()
     out = Path(args.out)
     out = out if out.is_absolute() else C.RESULTS_DIR / out

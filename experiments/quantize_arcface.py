@@ -2,12 +2,16 @@
 w600k_r50.onnx -- the NETWORK-compression counterpart to the template
 compression study.
 
-Calibration images come from an InsightFace .bin pack (default: lfw.bin) and
-are preprocessed EXACTLY like extraction does (RGB, (x-127.5)/127.5, NCHW);
-a range mismatch here would silently wreck the activation scales.
+Calibration images come from an InsightFace .bin pack (default: lfw.bin) OR a
+folder of crops (--calib-dir, e.g. CASIA-WebFace). Both are preprocessed EXACTLY
+like extraction does (RGB, (x-127.5)/127.5, NCHW); a range mismatch here would
+silently wreck the activation scales. Calibrating on lfw.bin leaks the LFW eval
+pack into the LFW/SLLFW rows -- use --calib-dir for an eval-disjoint calibration
+and to test whether cross-quality calibration shrinks the XQLFW loss.
 
   python experiments/quantize_arcface.py
-  python experiments/quantize_arcface.py --reduce-range   # if cosine check is poor
+  python experiments/quantize_arcface.py --calib-dir /data/casia   # eval-disjoint
+  python experiments/quantize_arcface.py --reduce-range            # if cosine check is poor
 
 Prints file sizes, fp32-vs-int8 embedding cosine on held-out images, and a
 CPU latency comparison -- the numbers for the paper's network-compression table.
@@ -40,6 +44,36 @@ class BinReader(CalibrationDataReader):
         self.batches = [
             np.stack([preprocess(images[i]) for i in idxs[s:s + batch]])
             for s in range(0, len(idxs), batch)]
+        self.input_name = input_name
+        self.pos = 0
+
+    def get_next(self):
+        if self.pos >= len(self.batches):
+            return None
+        b = self.batches[self.pos]
+        self.pos += 1
+        return {self.input_name: b}
+
+
+class FolderReader(CalibrationDataReader):
+    """Calibrate on a folder of face crops (e.g. CASIA-WebFace) -- eval-disjoint,
+    deployment-realistic. Same RGB, (x-127.5)/127.5, NCHW preprocessing as BinReader."""
+    def __init__(self, folder, input_name, n=256, batch=8, seed=0):
+        exts = {".jpg", ".jpeg", ".png", ".bmp"}
+        files = [p for p in Path(folder).rglob("*") if p.suffix.lower() in exts]
+        rng = np.random.default_rng(seed)
+        rng.shuffle(files)
+        files = files[:n]
+        if not files:
+            raise SystemExit(f"no images found under {folder}")
+        imgs = []
+        for p in files:
+            img = cv2.imread(str(p))
+            if img is None:
+                continue
+            imgs.append(cv2.resize(img, (112, 112)))
+        self.batches = [np.stack([preprocess(i) for i in imgs[s:s + batch]])
+                        for s in range(0, len(imgs), batch)]
         self.input_name = input_name
         self.pos = 0
 
@@ -87,6 +121,9 @@ def main():
                          "else data/models/w600k_r50_int8.onnx")
     ap.add_argument("--calib-bin", default=None,
                     help="default: <data.bin_pack>/lfw.bin")
+    ap.add_argument("--calib-dir", default=None,
+                    help="calibrate on a folder of crops (CASIA etc.) instead of "
+                         "--calib-bin; removes the eval-set calibration leakage")
     ap.add_argument("--calib-n", type=int, default=256)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--reduce-range", action="store_true",
@@ -102,8 +139,9 @@ def main():
 
     print(f"src   : {src}")
     print(f"dst   : {dst}")
-    print(f"calib : {calib_bin} ({args.calib_n} images, seed {args.seed})")
 
+    # held-out images for the fp32-vs-int8 cosine sanity check always come from
+    # the .bin pack (they are disjoint from folder calibration by construction).
     images, _ = bin_loader.load_bin(calib_bin)
     rng = np.random.default_rng(args.seed)
     perm = rng.permutation(len(images))
@@ -112,6 +150,13 @@ def main():
 
     sess32 = cpu_session(src)
     input_name = sess32.get_inputs()[0].name
+
+    if args.calib_dir:
+        reader = FolderReader(args.calib_dir, input_name, n=args.calib_n, seed=args.seed)
+        print(f"calib : folder {args.calib_dir} ({args.calib_n} images, seed {args.seed})")
+    else:
+        reader = BinReader(images, calib_idx, input_name)
+        print(f"calib : {calib_bin} ({args.calib_n} images, seed {args.seed})")
 
     pre = dst.with_name(dst.stem + "_pre.onnx")
     print("preprocessing graph (shape inference + optimization)...")
@@ -132,7 +177,7 @@ def main():
 
     print(f"calibrating + quantizing (QDQ, per_channel={per_channel})...")
     quantize_static(str(pre), str(dst),
-                    BinReader(images, calib_idx, input_name),
+                    reader,
                     quant_format=QuantFormat.QDQ,
                     per_channel=per_channel,
                     reduce_range=args.reduce_range,
